@@ -1,6 +1,5 @@
 const cheerio = require("cheerio");
 const d3 = require("d3");
-const request = require("request");
 const wiki = require("./mediawiki");
 
 const samplejson = require("../sample/aikatsu.json");

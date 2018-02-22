@@ -7,9 +7,7 @@
     "browser-request": "^0.3.3",
     "cheerio": "^1.0.0-rc.2",
     "d3": "^4.10.2",
-    "eslint": "^4.7.2",
-    "jquery": "^3.2.1",
-    "request": "^2.83.0"
+    "eslint": "^4.7.2"
   },
   "devDependencies": {
     "browserify": "^14.4.0"
