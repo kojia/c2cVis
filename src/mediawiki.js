@@ -12,7 +12,8 @@ const fetchJson = function (wikiURL) {
         prop: "revisions",
         rvprop: "content",
         rvparse: "",
-        titles: decodeURI(title)
+        titles: decodeURI(title),
+        origin: "*"
       },
       headers: {
         // "User-Agent": "c2cVis (kojia1234567890@gmail.com)",
