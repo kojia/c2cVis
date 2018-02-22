@@ -1,4 +1,4 @@
-# c2cViz
+# c2cVis
 Wikipediaの登場人物一覧ページを解析して人物関係を可視化します  
 [**Try it**](https://kojia.github.io/c2cVis/)
 
