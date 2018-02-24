@@ -148,7 +148,7 @@ const summarizeLink = function (charaList) {
 // draw svg
 ///////////////////////////////////////
 const drawGraph = function (charaList, links) {
-  const svg = d3.select("svg");
+  const svg = d3.select("#graph");
   svg.selectAll("*").remove();
   const width = svg.attr("width");
   const height = svg.attr("height");
