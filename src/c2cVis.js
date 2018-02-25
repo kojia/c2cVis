@@ -147,66 +147,25 @@ const summarizeLink = function (charaList) {
 ///////////////////////////////////////
 // draw svg
 ///////////////////////////////////////
-const drawGraph = function (charaList, links) {
-  const svg = d3.select("#graph");
+const initGraph = (svgSelector) => {
+  const svg = d3.select(svgSelector);
   svg.selectAll("*").remove();
   const width = svg.attr("width");
   const height = svg.attr("height");
 
   const container = svg
     .append("g").attr("class", "container");
+  container.append("g").attr("class", "links");
+  container.append("g").attr("class", "nodes");
 
-  const categoryColor = d3.scaleOrdinal(d3.schemeCategory20);
-
-  const linkStrength = d3.scalePow()
-    .exponent(0.5)
-    .domain([0, Math.max.apply(null, links.map(function (d) { return d.value; }))])
-    .range([0, 0.5]);;
-
-  const simulation = d3.forceSimulation()
-    .force("link", d3.forceLink()
-      .id(function (d) { return d.name; })
-      .strength(function (d) { return linkStrength(d.value); }))
-    .force("charge", d3.forceManyBody())
-    .force("center", d3.forceCenter(width / 2, height / 2));
-
-  const d3link = container.append("g")
-    .attr("class", "links")
-    .selectAll("line")
-    .data(links)
-    .enter().append("line")
-    .attr("stroke", "rgba(0, 0, 0, 0.2)")
-    .attr("stroke-width", function (d) { return linkStrength(d.value) * 5; });
-
-  const d3node = container.append("g")
-    .attr("class", "nodes")
-    .selectAll(".node")
-    .data(charaList)
-    .enter().append("g").attr("class", "node");
-  d3node.append("circle")
-    .attr("r", 2).attr("fill", function (d) {
-      return categoryColor(d.categoroy);
-    });
-
-  d3node.append("text")
-    .attr("font-size", "4")
-    .attr("fill", "#aa33ee")
-    .text(function (d) { return d.name; });
-
-  simulation.nodes(charaList)
-    .on("tick", ticked);
-
-  simulation.force("link")
-    .links(links);
-
-  function ticked() {
-    d3link
+  const tick = () => {
+    svg.selectAll(".link")
       .attr("x1", function (d) { return d.source.x; })
       .attr("y1", function (d) { return d.source.y; })
       .attr("x2", function (d) { return d.target.x; })
       .attr("y2", function (d) { return d.target.y; });
 
-    d3node
+    svg.selectAll(".node")
       .attr("transform", function (d) {
         return "translate(" + d.x + "," + d.y + ")";
       });
@@ -216,6 +175,59 @@ const drawGraph = function (charaList, links) {
       return bbox.x + ", " + bbox.y + ", " + bbox.width + ", " + bbox.height;
     });
   }
+
+  const simulation = d3.forceSimulation()
+    .force("charge", d3.forceManyBody())
+    .force("center", d3.forceCenter(width / 2, height / 2))
+    .on("tick", tick);
+
+  return { svg: svg, sim: simulation };
+};
+
+const categoryColor = d3.scaleOrdinal(d3.schemeCategory20);
+
+const updateGraph = function (graph, charaNodes, charaLinks) {
+
+  const linkStrength = d3.scalePow()
+    .exponent(0.5)
+    .domain([0, Math.max.apply(null, charaLinks.map(function (d) { return d.value; }))])
+    .range([0, 0.5]);;
+
+  const d3link = graph.svg.select(".links")
+    .selectAll(".link")
+    .data(charaLinks);
+  d3link.exit().remove();
+  d3link.enter().append("line")
+    .attr("class", "link")
+    .merge(d3link)
+    .attr("stroke", "rgba(0, 0, 0, 0.2)")
+    .attr("stroke-width", function (d) { return linkStrength(d.value) * 5; });
+
+  const d3node = graph.svg.select(".nodes")
+    .selectAll(".node")
+    .data(charaNodes);
+  d3node.exit().remove();
+  const enteredNode = d3node.enter().append("g")
+    .attr("class", "node");
+  enteredNode.append("circle");
+  enteredNode.append("text")
+    .attr("font-size", "4")
+    .attr("fill", "#aa33ee");
+  const mergedNode = enteredNode.merge(d3node);
+  mergedNode.select("circle")
+    .attr("r", 2).attr("fill", function (d) {
+      return categoryColor(d.categoroy);
+    });
+  mergedNode.select("text")
+    .text(function (d) { return d.name; });
+
+  graph.sim.nodes(charaNodes)
+  graph.sim.force("link", d3.forceLink()
+    .id(function (d) { return d.name; })
+    .strength(function (d) { return linkStrength(d.value); }));
+  graph.sim.force("link").links(charaLinks);
+  graph.sim.alpha(1);
+  graph.sim.restart();
 };
 
 // set the range of the depth-adjusting slidbar
@@ -229,11 +241,12 @@ const setThRange = function (max, init) {
     .text(init);
 }
 
+let graph;
 let _charaList;
 let limitedCharaList;
 let links;
 
-const init = (json, threshold = undefined) => {
+const startGraph = (graph, json, threshold = undefined) => {
   _charaList = parseCharaList(json);
 
   const depth = Math.max(..._charaList.map(chara => chara.relateionCnt));
@@ -245,20 +258,20 @@ const init = (json, threshold = undefined) => {
   setThRange(sqrtDepth, threshold);
   limitedCharaList = limitCharacter(_charaList, threshold ** 2);
   links = summarizeLink(limitedCharaList);
-  drawGraph(limitedCharaList, links);
+  updateGraph(graph, limitedCharaList, links);
 }
 
 d3.select("#btn_load").on("click", function () {
   const url = d3.select("#input_url").property("value");
   const json = wiki.fetchJson(url)
-    .then(init, (err) => alert(err));
+    .then((json) => startGraph(graph, json), (err) => alert(err));
 });
 
 d3.select("#btn_thChg").on("click", function () {
   const newDepth = Number(d3.select("#thOutput").text()) ** 2;
   limitedCharaList = limitCharacter(_charaList, newDepth);
   links = summarizeLink(limitedCharaList);
-  drawGraph(limitedCharaList, links);
+  updateGraph(graph, limitedCharaList, links);
 })
 
 d3.select("#input_url").on("input", () => {
@@ -274,8 +287,8 @@ d3.select("#input_url").on("input", () => {
     .text(decodeURI(outputStr));
 });
 
-
-init(samplejson, 2.8);
+graph = initGraph("#graph");
+startGraph(graph, samplejson, 2.8);
 d3.select("#input_url")
   .property("value", sampleURL);
 d3.select("#output_url")
