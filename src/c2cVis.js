@@ -16,11 +16,11 @@ const parseCharaList = function (wikijson) {
   let category = 0;
   $("dl").each(function () {
     $(this).children("dt").each(function () {
-      const name = $(this).text().replace(/[\(（].+?[\)）：]/g, "")
-        .replace(/\[.+?\]/g, "").trim();
-      console.log(name);
+      const name = $(this).text()
+        .replace(/[\(（](?:[^\(（\)）]*[\(（][^\(（\)）]*[\)）])*[^\(（\)）]*[\)）]/g, "")
+        .replace(/\[.+?\]/g, "")
+        .trim();
       const splitName = name.split(/[\s、,・=＝/]/).filter(str => str != "");
-      console.log(splitName);
       const nameURL = $(this).find("a").attr("href");
       const text = $(this).nextUntil("dt", "dd").not(".reference").text();
       if (name === "") return;
