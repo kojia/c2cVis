@@ -1,11 +1,12 @@
 var request = require('browser-request');
+
 const fetchJson = function (wikiURL) {
   return new Promise((resolve, reject) => {
     const title = wikiURL.match(/\/([^\/]+?)$/)[1];
+    const urlDomain = wikiURL.match(/(https:\/\/..\.wikipedia.org)/)[1];
 
-    console.log(decodeURI(title));
     request({
-      url: "https://ja.wikipedia.org/w/api.php",
+      url: urlDomain + "/w/api.php",
       qs: {
         format: "json",
         action: "query",
