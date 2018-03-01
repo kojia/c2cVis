@@ -18,7 +18,9 @@ const parseCharaList = function (wikijson) {
     $(this).children("dt").each(function () {
       const name = $(this).text().replace(/[\(（].+?[\)）：]/g, "")
         .replace(/\[.+?\]/g, "").trim();
-      const splitName = name.split(/[\s、,・=＝]/);
+      console.log(name);
+      const splitName = name.split(/[\s、,・=＝/]/).filter(str => str != "");
+      console.log(splitName);
       const nameURL = $(this).find("a").attr("href");
       const text = $(this).nextUntil("dt", "dd").not(".reference").text();
       if (name === "") return;
