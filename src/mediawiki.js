@@ -1,9 +1,15 @@
 var request = require('browser-request');
 
-const fetchJson = function (wikiURL) {
+const fetchJson = function (wikiURL, originURL = undefined) {
   return new Promise((resolve, reject) => {
+    console.log(wikiURL);
     const title = wikiURL.match(/\/([^\/]+?)$/)[1];
-    const urlDomain = wikiURL.match(/(https:\/\/..\.wikipedia.org)/)[1];
+    let urlDomain;
+    if (originURL) {
+      urlDomain = originURL.match(/(https:\/\/..\.wikipedia.org)/)[1];
+    } else {
+      urlDomain = wikiURL.match(/(https:\/\/..\.wikipedia.org)/)[1];
+    }
 
     request({
       url: urlDomain + "/w/api.php",
