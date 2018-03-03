@@ -28,10 +28,10 @@ async function readDetailPage(detailURL, originURL) {
 
 async function parseCharaList(url, wikiHTML, deepFetchable = false) {
   const $ = cheerio.load(wikiHTML);
-  let promises = [];
+  let charas = [];
   let category = 0;
-  $("dl").each(async function () {
-    const _promises = $(this).children("dt").map(async function () {
+  $("dl").each(function () {
+    const charasBydl = $(this).children("dt").map(function () {
       const _category = category;
       const name = $(this).text()
         .replace(/[\(（](?:[^\(（\)）]*[\(（][^\(（\)）]*[\)）])*[^\(（\)）]*[\)）]/g, "")
@@ -40,10 +40,6 @@ async function parseCharaList(url, wikiHTML, deepFetchable = false) {
       const splitName = name.split(/[\s、,・=＝/]/).filter(str => str != "");
       const nameURL = $(this).children("a").attr("href");
       let text = $(this).nextUntil("dt", "dd").not(".reference").text();
-      if (deepFetchable && nameURL) {
-        const _detailText = await readDetailPage(nameURL, url);
-        text += _detailText;
-      }
       if (name === "") return;
       return {
         "name": name,
@@ -55,15 +51,20 @@ async function parseCharaList(url, wikiHTML, deepFetchable = false) {
         "categoroy": _category
       };
     }).get();
-    promises = promises.concat(_promises);
+    charas = charas.concat(charasBydl);
     if ($(this).next().not("dl").length > 0) {
       category++;
     }
   });
-  return await Promise.all(promises)
-    .then(val => {
-      return val;
-    });
+  if (deepFetchable) {
+    for (let i = 0; i < charas.length; i++) {
+      if (charas[i].nameURL) {
+        const detailText = await readDetailPage(charas[i].nameURL, url);
+        charas[i].text += detailText;
+      }
+    }
+  }
+  return charas;
 }
 
 const countCharaRelation = function (charaList) {
@@ -272,12 +273,12 @@ let _charaList;
 let limitedCharaList;
 let links;
 
-const startGraph = async (graph, url, html, deepFetchable = false,  threshold = undefined) => {
+const startGraph = async (graph, url, html, deepFetchable = false, threshold = undefined) => {
   _charaList = await parseCharaList(url, html, deepFetchable);
   countCharaRelation(_charaList);
-  // console.log(_charaList);
   const depth = Math.max(..._charaList.map(chara => chara.relateionCnt));
-  console.log('depth', depth);
+  // console.log(_charaList);
+  // console.log('depth', depth);
   const sqrtDepth = Math.floor(Math.sqrt(depth));
   if (!threshold) {
     threshold = Math.floor((1 + sqrtDepth) / 2);

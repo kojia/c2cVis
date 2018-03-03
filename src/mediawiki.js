@@ -16,6 +16,7 @@ const fetchJson = function (wikiURL, originURL = undefined) {
     const buffered = buf.filter(b => b.url === wikiURL);
     if (buffered.length > 0) {
       resolve(buffered[0].json);
+      // console.log("buffered", buffered[0].url);
       return;
     }
 
@@ -43,6 +44,7 @@ const fetchJson = function (wikiURL, originURL = undefined) {
         const json = JSON.parse(body);
         buf.push({ url: wikiURL, json: json });
         if (buf.length > 3) { buf.shift() }
+        // console.log("new", wikiURL);
         resolve(json);
       }
     });
