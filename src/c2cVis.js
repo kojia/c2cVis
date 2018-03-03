@@ -6,14 +6,22 @@ const samplejson = require("../sample/aikatsu.json");
 const sampleURL = "https://ja.wikipedia.org/wiki/%E3%82%A2%E3%82%A4%E3%82%AB%E3%83%84!%E3%81%AE%E7%99%BB%E5%A0%B4%E4%BA%BA%E7%89%A9%E4%B8%80%E8%A6%A7";
 
 async function readDetailPage(detailURL, originURL) {
+  let id = detailURL.match(/#([^#]+?)$/);
+  id = id ? id[1] : id;
   return new Promise((resolve, reject) => {
     wiki.fetchHTML(detailURL, originURL)
       .then(html => {
-        const $ = cheerio.load(hTML);
-        const text = $("p").map((i, el) => {
-          return $(el).text();
-        }).get().join(" ");
-        resolve(text);
+        const $ = cheerio.load(html);
+        let _text;
+        if (id) {
+          _text = $("#" + id).closest("dt")
+            .nextUntil("dt", "dd").not(".reference").text();
+        } else {
+          _text = $("p").map((i, el) => {
+            return $(el).text();
+          }).get().join(" ");
+        }
+        resolve(_text);
       })
   });
 };
@@ -37,7 +45,6 @@ async function parseCharaList(url, wikiHTML) {
         text += _detailText;
       }
       if (name === "") return;
-      console.log(name, _category);
       return {
         "name": name,
         "splitName": splitName,
@@ -268,7 +275,7 @@ let links;
 const startGraph = async (graph, url, html = undefined, threshold = undefined) => {
   _charaList = await parseCharaList(url, html);
   countCharaRelation(_charaList);
-
+  console.log(_charaList);
   const depth = Math.max(..._charaList.map(chara => chara.relateionCnt));
   console.log('depth', depth);
   const sqrtDepth = Math.floor(Math.sqrt(depth));

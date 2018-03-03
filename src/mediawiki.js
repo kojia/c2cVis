@@ -41,9 +41,9 @@ const fetchJson = function (wikiURL, originURL = undefined) {
 const fetchHTML = async (wikiURL, originURL = undefined, json = undefined) => {
   let id = null;
   if (!json) {
-    id = wikiURL.match(/#(?:[^#]+?)$/);
-    id = id ? id[0] : id;
-    const _wikiURL = id ? wikiURL.slice(0, -1 * id.length) : wikiURL;
+    id = wikiURL.match(/#([^#]+?)$/);
+    id = id ? id[1] : id;
+    const _wikiURL = id ? wikiURL.slice(0, -1 * (1 + id.length)) : wikiURL;
     json = await fetchJson(_wikiURL, originURL);
   }
   let rowHTML = Object.keys(json["query"]["pages"])
@@ -51,11 +51,12 @@ const fetchHTML = async (wikiURL, originURL = undefined, json = undefined) => {
       return json["query"]["pages"][key];
     })[0]["revisions"][0]["*"];
 
-  if (id !== null) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(rowHTML, "text/html");
-    rowHTML = doc.getElementById(id).innerHTML;
-  }
+  // if (id !== null) {
+  //   const parser = new DOMParser();
+  //   const doc = parser.parseFromString(rowHTML, "text/html");
+  //   console.log(doc.getElementById(id));
+  //   rowHTML = doc.getElementById(id).innerHTML;
+  // }
   return rowHTML;
 };
 
