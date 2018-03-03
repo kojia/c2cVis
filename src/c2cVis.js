@@ -26,7 +26,7 @@ async function readDetailPage(detailURL, originURL) {
   });
 };
 
-async function parseCharaList(url, wikiHTML) {
+async function parseCharaList(url, wikiHTML, deepFetchable = false) {
   const $ = cheerio.load(wikiHTML);
   let promises = [];
   let category = 0;
@@ -40,7 +40,7 @@ async function parseCharaList(url, wikiHTML) {
       const splitName = name.split(/[\s、,・=＝/]/).filter(str => str != "");
       const nameURL = $(this).children("a").attr("href");
       let text = $(this).nextUntil("dt", "dd").not(".reference").text();
-      if (nameURL) {
+      if (deepFetchable && nameURL) {
         const _detailText = await readDetailPage(nameURL, url);
         text += _detailText;
       }
@@ -272,8 +272,8 @@ let _charaList;
 let limitedCharaList;
 let links;
 
-const startGraph = async (graph, url, html = undefined, threshold = undefined) => {
-  _charaList = await parseCharaList(url, html);
+const startGraph = async (graph, url, html, deepFetchable = false,  threshold = undefined) => {
+  _charaList = await parseCharaList(url, html, deepFetchable);
   countCharaRelation(_charaList);
   console.log(_charaList);
   const depth = Math.max(..._charaList.map(chara => chara.relateionCnt));
@@ -296,7 +296,8 @@ d3.select("#btn_clear").on("click", function () {
 d3.select("#btn_load").on("click", async function () {
   const url = d3.select("#input_url").property("value");
   const rowHTML = await wiki.fetchHTML(url)
-  startGraph(graph, url, rowHTML);
+  const deepfetch = d3.select("#cb_deepfetch").property("checked");
+  startGraph(graph, url, rowHTML, deepfetch);
 });
 
 d3.select("#btn_thChg").on("click", function () {
@@ -325,6 +326,7 @@ wiki.fetchHTML("", "", samplejson).then(samplehtml => {
     graph,
     "https://ja.wikipedia.org/wiki/%E3%82%A2%E3%82%A4%E3%82%AB%E3%83%84!%E3%81%AE%E7%99%BB%E5%A0%B4%E4%BA%BA%E7%89%A9%E4%B8%80%E8%A6%A7",
     samplehtml,
+    false,
     2.8);
   d3.select("#input_url")
     .property("value", sampleURL);

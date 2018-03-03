@@ -16,16 +16,15 @@
     <p>
         <label>URL</label>
         <input id="input_url" type="url" style="width:50%">
-        </input>
         <button id="btn_clear">Clear</button>
         <button id="btn_load">Load</button>
+        <input type="checkbox" id="cb_deepfetch">Deep Fetch
         <br />
         <output id="output_url"></output>
     </p>
     <p>
         <label>Threshold</label>
         <input type="range" id="thRange" oninput="thOutput.value = thRange.value" style="width:30%">
-        </input>
         <output id="thOutput"></output>
         <button id="btn_thChg">Reparse</button>
     </p>
