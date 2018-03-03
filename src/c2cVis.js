@@ -289,11 +289,6 @@ const startGraph = async (graph, url, html, deepFetchable = false, threshold = u
   updateGraph(graph, limitedCharaList, links);
 }
 
-d3.select("#btn_clear").on("click", function () {
-  d3.select("#input_url").property("value", "");
-  d3.select("#output_url").text("");
-});
-
 d3.select("#btn_load").on("click", async function () {
   const url = d3.select("#input_url").property("value");
   const rowHTML = await wiki.fetchHTML(url)
