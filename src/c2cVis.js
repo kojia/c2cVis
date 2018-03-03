@@ -275,7 +275,7 @@ let links;
 const startGraph = async (graph, url, html, deepFetchable = false,  threshold = undefined) => {
   _charaList = await parseCharaList(url, html, deepFetchable);
   countCharaRelation(_charaList);
-  console.log(_charaList);
+  // console.log(_charaList);
   const depth = Math.max(..._charaList.map(chara => chara.relateionCnt));
   console.log('depth', depth);
   const sqrtDepth = Math.floor(Math.sqrt(depth));

@@ -1,14 +1,22 @@
 var request = require('browser-request');
 
+const buf = [];
+
 const fetchJson = function (wikiURL, originURL = undefined) {
   return new Promise((resolve, reject) => {
-    console.log(wikiURL);
+    // console.log(wikiURL);
     const title = wikiURL.match(/\/([^\/]+?)$/)[1];
     let urlDomain;
     if (originURL) {
       urlDomain = originURL.match(/(https:\/\/..\.wikipedia.org)/)[1];
     } else {
       urlDomain = wikiURL.match(/(https:\/\/..\.wikipedia.org)/)[1];
+    }
+
+    const buffered = buf.filter(b => b.url === wikiURL);
+    if (buffered.length > 0) {
+      resolve(buffered[0].json);
+      return;
     }
 
     request({
@@ -32,7 +40,10 @@ const fetchJson = function (wikiURL, originURL = undefined) {
         reject(error);
       } else {
         // console.log('body:', body); // Print the HTML.
-        resolve(JSON.parse(body));
+        const json = JSON.parse(body);
+        buf.push({ url: wikiURL, json: json });
+        if (buf.length > 3) { buf.shift() }
+        resolve(json);
       }
     });
   });
