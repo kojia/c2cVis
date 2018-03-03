@@ -37,7 +37,30 @@ const fetchJson = function (wikiURL, originURL = undefined) {
     });
   });
 }
+
+const fetchHTML = async (wikiURL, originURL = undefined, json = undefined) => {
+  let id = null;
+  if (!json) {
+    id = wikiURL.match(/#(?:[^#]+?)$/);
+    id = id ? id[0] : id;
+    const _wikiURL = id ? wikiURL.slice(0, -1 * id.length) : wikiURL;
+    json = await fetchJson(_wikiURL, originURL);
+  }
+  let rowHTML = Object.keys(json["query"]["pages"])
+    .map(function (key) {
+      return json["query"]["pages"][key];
+    })[0]["revisions"][0]["*"];
+
+  if (id !== null) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(rowHTML, "text/html");
+    rowHTML = doc.getElementById(id).innerHTML;
+  }
+  return rowHTML;
+};
+
 module.exports = {
-  fetchJson: fetchJson
+  fetchJson: fetchJson,
+  fetchHTML: fetchHTML
 }
 // fetchJson("https://ja.wikipedia.org/wiki/%E3%82%A2%E3%82%A4%E3%82%AB%E3%83%84!%E3%81%AE%E7%99%BB%E5%A0%B4%E4%BA%BA%E7%89%A9%E4%B8%80%E8%A6%A7")
