@@ -174,11 +174,16 @@ const summarizeLink = function (charaList) {
 ///////////////////////////////////////
 // draw svg
 ///////////////////////////////////////
-const initGraph = (svgSelector) => {
-  const svg = d3.select(svgSelector);
+const initGraph = (selector) => {
+  const outer = d3.select(selector);
+  outer.style("position", "relative");
+  const width = outer.attr("width");
+  const height = outer.attr("height");
+  const svg = d3.select(selector)
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
   svg.selectAll("*").remove();
-  const width = svg.attr("width");
-  const height = svg.attr("height");
 
   const container = svg
     .append("g").attr("class", "container");
@@ -208,7 +213,37 @@ const initGraph = (svgSelector) => {
     .force("center", d3.forceCenter(width / 2, height / 2))
     .on("tick", tick);
 
-  return { svg: svg, sim: simulation };
+  const loading = outer.append("svg")
+    .attr("class", "loading")
+    .attr("width", width)
+    .attr("height", height)
+    .style("position", "absolute")
+    .style("top", 0);
+  text = loading.append("text")
+    .attr("x", width / 2)
+    .attr("y", height / 2)
+    .attr("font-size", width / 20)
+    .attr("text-anchor", "middle")
+    .attr("fill", "black")
+    .text("Loading...");
+  function repeat() {
+    text.transition().duration(2000)
+      .attr("fill", "gray")
+      .transition().duration(2000)
+      .attr("fill", "black")
+      .on("end", repeat);
+  }
+  repeat();
+  const visualizeLoad = (visible) => {
+    if (visible) {
+      loading.style("visibility", "visible")
+    } else {
+      loading.style("visibility", "hidden")
+    }
+  }
+  visualizeLoad(false);
+
+  return { svg: svg, sim: simulation, visualizeLoad: visualizeLoad };
 };
 
 const categoryColor = d3.scaleOrdinal(d3.schemeCategory20);
@@ -274,6 +309,7 @@ let limitedCharaList;
 let links;
 
 const startGraph = async (graph, url, html, deepFetchable = false, threshold = undefined) => {
+  graph.visualizeLoad(true);
   _charaList = await parseCharaList(url, html, deepFetchable);
   countCharaRelation(_charaList);
   const depth = Math.max(..._charaList.map(chara => chara.relateionCnt));
@@ -287,6 +323,7 @@ const startGraph = async (graph, url, html, deepFetchable = false, threshold = u
   limitedCharaList = limitCharacter(_charaList, threshold ** 2);
   links = summarizeLink(limitedCharaList);
   updateGraph(graph, limitedCharaList, links);
+  graph.visualizeLoad(false);
 }
 
 d3.select("#btn_load").on("click", async function () {
