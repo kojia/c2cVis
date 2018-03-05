@@ -26,7 +26,7 @@ async function readDetailPage(detailURL, originURL) {
   });
 };
 
-async function parseCharaList(url, wikiHTML, deepFetchable = false) {
+async function parseCharaList(url, wikiHTML, deepFetchable = false, graph = undefined) {
   const $ = cheerio.load(wikiHTML);
   let charas = [];
   let category = 0;
@@ -59,6 +59,9 @@ async function parseCharaList(url, wikiHTML, deepFetchable = false) {
   if (deepFetchable) {
     for (let i = 0; i < charas.length; i++) {
       if (charas[i].nameURL) {
+        if (graph) {
+          graph.visualizeLoad(true, charas[i].name);
+        }
         const detailText = await readDetailPage(charas[i].nameURL, url);
         charas[i].text += detailText;
       }
@@ -218,8 +221,9 @@ const initGraph = (selector) => {
     .attr("width", width)
     .attr("height", height)
     .style("position", "absolute")
-    .style("top", 0);
-  text = loading.append("text")
+    .style("top", 0)
+    .style("left", 0);
+  const loadingText = loading.append("text")
     .attr("x", width / 2)
     .attr("y", height / 2)
     .attr("font-size", width / 20)
@@ -227,18 +231,26 @@ const initGraph = (selector) => {
     .attr("fill", "black")
     .text("Loading...");
   function repeat() {
-    text.transition().duration(2000)
+    loadingText.transition().duration(2000)
       .attr("fill", "gray")
       .transition().duration(2000)
       .attr("fill", "black")
       .on("end", repeat);
   }
   repeat();
-  const visualizeLoad = (visible) => {
+  const loadingCharaName = loading.append("text")
+    .attr("x", width / 2)
+    .attr("y", height / 2 + width / 20)
+    .attr("text-anchor", "middle")
+    .attr("font-size", width / 30)
+    .attr("fill", "black");
+  const visualizeLoad = (visible, name = undefined) => {
     if (visible) {
       loading.style("visibility", "visible")
+      loadingCharaName.text(name);
     } else {
-      loading.style("visibility", "hidden")
+      loading.style("visibility", "hidden");
+      loadingCharaName.text("");
     }
   }
   visualizeLoad(false);
@@ -310,7 +322,7 @@ let links;
 
 const startGraph = async (graph, url, html, deepFetchable = false, threshold = undefined) => {
   graph.visualizeLoad(true);
-  _charaList = await parseCharaList(url, html, deepFetchable);
+  _charaList = await parseCharaList(url, html, deepFetchable, graph);
   countCharaRelation(_charaList);
   const depth = Math.max(..._charaList.map(chara => chara.relateionCnt));
   // console.log(_charaList);
